@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cmf4all"
+version = "0.1.0"
+description = "Core mass function tools for comparing Galactic and extragalactic core catalogues."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy",
+  "pandas",
+  "pyyaml",
+]
+
+[project.optional-dependencies]
+plot = ["matplotlib"]
+fits = ["astropy"]
+
+[tool.setuptools.packages.find]
+include = ["cmf4all*"]
