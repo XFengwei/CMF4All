@@ -26,14 +26,19 @@ DEFAULT_MMIN_COLOR = "0.45"
 DEFAULT_SHADE68_ALPHA = 0.28
 DEFAULT_SHADE95_ALPHA = 0.14
 DEFAULT_MULTI_COLORS = (
-    "#0072B2",
-    "#D55E00",
-    "#009E73",
-    "#CC79A7",
-    "#E69F00",
-    "#56B4E9",
-    "#000000",
+    "#4E79A7",
+    "#F28E2B",
+    "#E15759",
+    "#76B7B2",
+    "#59A14F",
+    "#EDC948",
+    "#B07AA1",
+    "#FF9DA7",
+    "#9C755F",
+    "#BAB0AB",
 )
+DEFAULT_MULTI_MARKERS = ("o", "s", "^", "D", "v", "P", "X", "<", ">", "h")
+DEFAULT_MULTI_LINESTYLES = ("-", "--", "-.", ":", (0, (5, 1.2)), (0, (3, 1.2, 1, 1.2)))
 
 
 def plot_mass_radius(
@@ -85,6 +90,8 @@ def plot_differential_cmf(
     marker_facecolor: str = DEFAULT_MARKER_FACECOLOR,
     fit_color: str = DEFAULT_FIT_COLOR,
     mmin_color: str = DEFAULT_MMIN_COLOR,
+    fit_linestyle: str | tuple = "-",
+    mmin_linestyle: str | tuple = "--",
     shade_posterior: bool = True,
     shade68_alpha: float = DEFAULT_SHADE68_ALPHA,
     shade95_alpha: float = DEFAULT_SHADE95_ALPHA,
@@ -161,10 +168,11 @@ def plot_differential_cmf(
                 grid,
                 powerlaw_differential_shape(grid, fit_result.gamma, x0, y0),
                 lw=1.5,
+                ls=fit_linestyle,
                 color=fit_color,
                 label=rf"{plot_label} fit: $\Gamma={fit_result.gamma:.2f}$",
             )
-            ax.axvline(fit_result.mmin, ls="--", lw=1.0, color=mmin_color)
+            ax.axvline(fit_result.mmin, ls=mmin_linestyle, lw=1.0, color=mmin_color)
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlabel(r"Core mass [$M_\odot$]")
@@ -189,6 +197,8 @@ def plot_ccdf(
     data_color: str = DEFAULT_DATA_COLOR,
     fit_color: str = DEFAULT_FIT_COLOR,
     mmin_color: str = DEFAULT_MMIN_COLOR,
+    fit_linestyle: str | tuple = "-",
+    mmin_linestyle: str | tuple = "--",
     shade_posterior: bool = True,
     shade68_alpha: float = DEFAULT_SHADE68_ALPHA,
     shade95_alpha: float = DEFAULT_SHADE95_ALPHA,
@@ -246,10 +256,11 @@ def plot_ccdf(
             grid,
             100.0 * powerlaw_ccdf_shape(grid, fit_result.gamma, fit_result.mmin, p_at_mmin),
             lw=1.5,
+            ls=fit_linestyle,
             color=fit_color,
             label=rf"{plot_label} fit: $\Gamma={fit_result.gamma:.2f}$",
         )
-        ax.axvline(fit_result.mmin, ls="--", lw=1.0, color=mmin_color)
+        ax.axvline(fit_result.mmin, ls=mmin_linestyle, lw=1.0, color=mmin_color)
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlabel(r"Core mass [$M_\odot$]")
@@ -449,10 +460,11 @@ def plot_multi_slope_posterior(
             density=density,
             color=style["fit_color"],
             histtype="step",
+            ls=style["fit_linestyle"],
             lw=line_width,
             label=style["label"],
         )
-        ax.axvline(median, color=style["fit_color"], lw=line_width)
+        ax.axvline(median, color=style["fit_color"], ls=style["fit_linestyle"], lw=line_width)
         if show_ci and ci is not None:
             ax.axvspan(ci[0], ci[1], color=style["fit_color"], alpha=ci_alpha)
         results[item_info["key"]] = {
@@ -495,6 +507,7 @@ def plot_multi_mass_radius(
             ax=ax,
             data_color=style["data_color"],
             marker_facecolor=style["marker_facecolor"],
+            marker=style["marker"],
             label=style["label"],
             **style["kwargs"],
         )
@@ -561,6 +574,9 @@ def plot_multi_cmf(
                 marker_facecolor=style["marker_facecolor"],
                 fit_color=style["fit_color"],
                 mmin_color=style["mmin_color"],
+                fit_linestyle=style["fit_linestyle"],
+                mmin_linestyle=style["mmin_linestyle"],
+                fmt=style["fmt"],
                 **style["kwargs"],
             )
             product = differential_cmf(
@@ -593,6 +609,9 @@ def plot_multi_cmf(
                 data_color=style["data_color"],
                 fit_color=style["fit_color"],
                 mmin_color=style["mmin_color"],
+                fit_linestyle=style["fit_linestyle"],
+                mmin_linestyle=style["mmin_linestyle"],
+                ls=style["step_linestyle"],
                 **style["kwargs"],
             )
             product = complementary_cmf(
@@ -673,18 +692,41 @@ def _multi_style_for(
 ) -> dict:
     override = _style_override_for_survey(survey, styles)
     data_color = override.get("data_color", DEFAULT_MULTI_COLORS[index % len(DEFAULT_MULTI_COLORS)])
+    marker = override.get("marker", DEFAULT_MULTI_MARKERS[index % len(DEFAULT_MULTI_MARKERS)])
+    line_style = override.get("line_style", DEFAULT_MULTI_LINESTYLES[index % len(DEFAULT_MULTI_LINESTYLES)])
     marker_facecolor = override.get("marker_facecolor", DEFAULT_MARKER_FACECOLOR)
     fit_color = override.get("fit_color", data_color)
-    mmin_color = override.get("mmin_color", data_color)
+    mmin_color = override.get("mmin_color", fit_color)
+    fit_linestyle = override.get("fit_linestyle", line_style)
+    mmin_linestyle = override.get("mmin_linestyle", line_style)
+    fmt = override.get("fmt", marker)
+    step_linestyle = override.get("step_linestyle", line_style)
     label = override.get("label", _label_override_for_survey(survey, labels))
     kwargs = dict(override.get("kwargs", {}))
-    for key in ("data_color", "marker_facecolor", "fit_color", "mmin_color", "label"):
+    for key in (
+        "data_color",
+        "marker",
+        "line_style",
+        "marker_facecolor",
+        "fit_color",
+        "mmin_color",
+        "fit_linestyle",
+        "mmin_linestyle",
+        "fmt",
+        "step_linestyle",
+        "label",
+    ):
         kwargs.pop(key, None)
     return {
         "data_color": data_color,
+        "marker": marker,
         "marker_facecolor": marker_facecolor,
         "fit_color": fit_color,
         "mmin_color": mmin_color,
+        "fit_linestyle": fit_linestyle,
+        "mmin_linestyle": mmin_linestyle,
+        "fmt": fmt,
+        "step_linestyle": step_linestyle,
         "label": label,
         "kwargs": kwargs,
     }
@@ -702,6 +744,7 @@ def _multi_style_for_posterior(
     if isinstance(fit_or_survey, Survey):
         return _multi_style_for(fit_or_survey, index, labels=labels, styles=styles)
     fit_color = DEFAULT_MULTI_COLORS[index % len(DEFAULT_MULTI_COLORS)]
+    fit_linestyle = DEFAULT_MULTI_LINESTYLES[index % len(DEFAULT_MULTI_LINESTYLES)]
     label = fallback_label or f"fit {index + 1}"
     if labels:
         for label_key in filter(None, (key, f"fit_{index}")):
@@ -716,9 +759,11 @@ def _multi_style_for_posterior(
                 break
     if override:
         fit_color = override.get("fit_color", override.get("data_color", fit_color))
+        fit_linestyle = override.get("fit_linestyle", override.get("line_style", fit_linestyle))
         label = override.get("label", label)
     return {
         "fit_color": fit_color,
+        "fit_linestyle": fit_linestyle,
         "label": label,
     }
 

@@ -1,5 +1,6 @@
 import unittest
 
+import cmf4all.plotting as plotting
 from cmf4all import SurveyRegistry
 from cmf4all.plotting import (
     DEFAULT_DATA_COLOR,
@@ -19,10 +20,27 @@ from cmf4all.plotting import (
 
 
 class PlottingStyleTests(unittest.TestCase):
+    def setUp(self):
+        registry = SurveyRegistry.from_default()
+        self.surveys = [
+            registry.get("LANCET"),
+            registry.get("ALMA-IMF"),
+            registry.get("ASHES"),
+        ]
+
     def test_default_plotting_colors(self):
         self.assertEqual(DEFAULT_DATA_COLOR, "#222222")
         self.assertEqual(DEFAULT_MARKER_FACECOLOR, "white")
         self.assertEqual(DEFAULT_FIT_COLOR, "#0072B2")
+
+    def test_multi_style_cycle_uses_multiple_visual_channels(self):
+        styles = [
+            plotting._multi_style_for(survey, index, styles=None, labels=None)
+            for index, survey in enumerate(self.surveys)
+        ]
+        self.assertEqual(len({style["data_color"] for style in styles}), len(styles))
+        self.assertEqual(len({style["marker"] for style in styles}), len(styles))
+        self.assertGreater(len({style["fit_linestyle"] for style in styles}), 1)
 
 
 class PlottingTests(unittest.TestCase):

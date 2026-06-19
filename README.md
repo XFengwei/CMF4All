@@ -222,6 +222,10 @@ ax, results = plot_multi_differential_cmf(
 )
 ```
 
+By default, multi-survey plots now cycle through a qualitative palette together
+with distinct markers and line styles, so larger survey sets remain readable.
+You can still override any survey style through the `styles={...}` argument.
+
 Per-survey fitting thresholds and labels can be passed as dictionaries keyed by
 survey key or short name:
 
